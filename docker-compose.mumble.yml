@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mumble-server:
+    image: mumblevoip/mumble-server:latest
+    container_name: mumble-server
+    restart: unless-stopped
+    ports:
+      - "64738:64738/tcp"    # Mumble 服务器端口
+      - "64738:64738/udp"    # Mumble 服务器端口
+      - "6502:6502"          # Ice 接口端口
+    environment:
+      # 不设置 MUMBLE_CONFIG_serverpassword，使用个人用户密码
+      - MUMBLE_CONFIG_ice="tcp -h 0.0.0.0 -p 6502"
+      - MUMBLE_CONFIG_icesecretread=8dsfd8asd8a5
+      - MUMBLE_CONFIG_icesecretwrite=8c6a6s4ca69s6
+      - MUMBLE_CONFIG_welcometext="欢迎来到 SeAT Mumble 服务器！请使用您的个人账户登录。"
+      - MUMBLE_CONFIG_registerName="高老庄2"
+      - MUMBLE_CONFIG_registerHostname=mumble.alkaids.uk
+    volumes:
+      - mumble-data:/data
+      - /opt/mumble/murmur.ini:/etc/murmur/murmur.ini:ro
+    networks:
+      - seat-network
+
+volumes:
+  mumble-data:
+
+networks:
+  seat-network:
+    external: true

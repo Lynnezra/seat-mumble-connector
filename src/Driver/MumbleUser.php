@@ -61,11 +61,18 @@ class MumbleUser implements IUser
 
     public function getName(): string
     {
-        // 优先使用nickname，如果没有则使用connector_name
+        // 如果有用户模型，使用格式化的连接器昵称
         if ($this->user_model) {
-            return $this->user_model->getDisplayName();
+            // 如果有自定义昵称，使用昵称替换角色名生成格式化名称
+            if (!empty($this->user_model->nickname)) {
+                return $this->buildFormattedNameWithNickname($this->user_model->nickname);
+            }
+            
+            // 否则使用标准的格式化名称（包含军团标识）
+            return $this->user_model->buildConnectorNickname();
         }
         
+        // 如果没有用户模型，回退到基本逻辑
         return $this->nickname ?: $this->connector_name;
     }
 
@@ -254,5 +261,55 @@ class MumbleUser implements IUser
     private function removeFromChannel(ISet $channel): void
     {
         // 实现将用户从频道移除的逻辑
+    }
+
+    /**
+     * 使用自定义昵称生成格式化的显示名称
+     * 格式: [Corporation Ticker] Custom Nickname
+     * 
+     * @param string $nickname 自定义昵称
+     * @return string 格式化的显示名称
+     */
+    public function buildFormattedNameWithNickname(string $nickname): string
+    {
+        try {
+            // 检查是否启用了 ticker 功能
+            if (!setting('seat-connector.ticker', true)) {
+                return $nickname;
+            }
+
+            // 获取用户的主角色
+            $character = $this->user_model->user->main_character;
+            if (is_null($character) || is_null($character->name)) {
+                $character = $this->user_model->user->characters->first();
+            }
+
+            if (is_null($character)) {
+                return $nickname;
+            }
+
+            // 获取军团和联盟信息
+            $corporation = \Seat\Eveapi\Models\Corporation\CorporationInfo::find($character->affiliation->corporation_id);
+            $alliance = is_null($character->affiliation->alliance_id) ? null : \Seat\Eveapi\Models\Alliances\Alliance::find($character->affiliation->alliance_id);
+            
+            // 获取格式设置
+            $format = setting('seat-connector.format', true) ?: '[%2$s] %1$s';
+            
+            $corp_ticker = $corporation->ticker ?? '';
+            $alliance_ticker = $alliance->ticker ?? '';
+            
+            // 使用自定义昵称替换角色名
+            return sprintf($format, $nickname, $corp_ticker, $alliance_ticker);
+            
+        } catch (\Exception $e) {
+            logger()->warning('Failed to build formatted name with nickname', [
+                'user_id' => $this->user_model->user_id ?? 'unknown',
+                'nickname' => $nickname,
+                'error' => $e->getMessage()
+            ]);
+            
+            // 如果出错，返回原始昵称
+            return $nickname;
+        }
     }
 }

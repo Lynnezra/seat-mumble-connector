@@ -38,4 +38,36 @@ Route::group([
             'uses' => 'SettingsController@testConnection',
         ]);
     });
+
+    // 权限管理路由
+    Route::group([
+        'prefix' => 'permissions',
+        'middleware' => 'can:global.superuser',
+    ], function () {
+
+        Route::get('/mumble', [
+            'as' => 'seat-mumble-connector.permissions.index',
+            'uses' => 'PermissionController@index',
+        ]);
+
+        Route::post('/mumble/add-admin', [
+            'as' => 'seat-mumble-connector.permissions.add-admin',
+            'uses' => 'PermissionController@addAdmin',
+        ]);
+
+        Route::post('/mumble/remove-admin', [
+            'as' => 'seat-mumble-connector.permissions.remove-admin',
+            'uses' => 'PermissionController@removeAdmin',
+        ]);
+
+        Route::post('/mumble/sync', [
+            'as' => 'seat-mumble-connector.permissions.sync',
+            'uses' => 'PermissionController@syncPermissions',
+        ]);
+
+        Route::get('/mumble/user/{user_id}', [
+            'as' => 'seat-mumble-connector.permissions.user',
+            'uses' => 'PermissionController@showUserPermissions',
+        ]);
+    });
 });

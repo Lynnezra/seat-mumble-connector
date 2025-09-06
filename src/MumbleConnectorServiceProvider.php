@@ -83,6 +83,8 @@ class MumbleConnectorServiceProvider extends AbstractSeatPlugin
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\TestIceConnection::class,
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManageIceInterface::class,
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\InstallIceExtension::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\SyncDisplayNames::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManagePermissions::class,
             ]);
         }
     }

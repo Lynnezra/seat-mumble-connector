@@ -644,6 +644,178 @@ class MumbleIceService
     }
 
     /**
+     * 设置用户权限
+     * 
+     * @param int $userId Mumble 用户ID
+     * @param int $channelId 频道ID（0表示全局权限）
+     * @param array $permissions 权限设置
+     * @return bool 是否设置成功
+     */
+    public function setUserPermissions(int $userId, int $channelId, array $permissions): bool
+    {
+        try {
+            $server = $this->getServer();
+            
+            // 获取频道ACL
+            $acl = $server->getACL($channelId);
+            
+            // 查找用户在ACL中的记录
+            $userAcl = null;
+            foreach ($acl['acls'] as $index => $aclEntry) {
+                if ($aclEntry['userid'] == $userId) {
+                    $userAcl = &$acl['acls'][$index];
+                    break;
+                }
+            }
+            
+            // 如果用户不在ACL中，创建新记录
+            if (!$userAcl) {
+                $userAcl = [
+                    'userid' => $userId,
+                    'allow' => 0,
+                    'deny' => 0
+                ];
+                $acl['acls'][] = &$userAcl;
+            }
+            
+            // 设置权限
+            $userAcl['allow'] = $permissions['allow'] ?? 0;
+            $userAcl['deny'] = $permissions['deny'] ?? 0;
+            
+            // 更新ACL
+            $server->setACL($channelId, $acl['acls'], $acl['groups'], $acl['inherit']);
+            
+            logger()->info('Successfully set user permissions via Ice', [
+                'user_id' => $userId,
+                'channel_id' => $channelId,
+                'allow' => $userAcl['allow'],
+                'deny' => $userAcl['deny']
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to set user permissions via Ice', [
+                'user_id' => $userId,
+                'channel_id' => $channelId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * 获取用户权限
+     * 
+     * @param int $userId Mumble 用户ID
+     * @param int $channelId 频道ID
+     * @return array|null 权限信息
+     */
+    public function getUserPermissions(int $userId, int $channelId): ?array
+    {
+        try {
+            $server = $this->getServer();
+            $acl = $server->getACL($channelId);
+            
+            // 查找用户权限
+            foreach ($acl['acls'] as $aclEntry) {
+                if ($aclEntry['userid'] == $userId) {
+                    return [
+                        'allow' => $aclEntry['allow'],
+                        'deny' => $aclEntry['deny']
+                    ];
+                }
+            }
+            
+            return null;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to get user permissions via Ice', [
+                'user_id' => $userId,
+                'channel_id' => $channelId,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * 设置用户为管理员
+     * 
+     * @param int $userId Mumble 用户ID
+     * @return bool 是否设置成功
+     */
+    public function setUserAdmin(int $userId): bool
+    {
+        // 管理员权限包括所有权限
+        $adminPermissions = [
+            'allow' => 0xFFFF, // 允许所有权限
+            'deny' => 0        // 不禁止任何权限
+        ];
+        
+        return $this->setUserPermissions($userId, 0, $adminPermissions);
+    }
+
+    /**
+     * 移除用户管理员权限
+     * 
+     * @param int $userId Mumble 用户ID
+     * @return bool 是否移除成功
+     */
+    public function removeUserAdmin(int $userId): bool
+    {
+        try {
+            $server = $this->getServer();
+            
+            // 获取根频道ACL
+            $acl = $server->getACL(0);
+            
+            // 移除用户的ACL记录
+            $acl['acls'] = array_filter($acl['acls'], function($aclEntry) use ($userId) {
+                return $aclEntry['userid'] != $userId;
+            });
+            
+            // 更新ACL
+            $server->setACL(0, $acl['acls'], $acl['groups'], $acl['inherit']);
+            
+            logger()->info('Successfully removed user admin permissions via Ice', [
+                'user_id' => $userId
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to remove user admin permissions via Ice', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * 批量设置用户权限
+     * 
+     * @param array $userPermissions 用户权限数组
+     * @return array 设置结果
+     */
+    public function batchSetUserPermissions(array $userPermissions): array
+    {
+        $results = [];
+        
+        foreach ($userPermissions as $userPerm) {
+            $userId = $userPerm['user_id'];
+            $channelId = $userPerm['channel_id'] ?? 0;
+            $permissions = $userPerm['permissions'];
+            
+            $success = $this->setUserPermissions($userId, $channelId, $permissions);
+            $results[$userId] = $success;
+        }
+        
+        return $results;
+    }
+
+    /**
      * 关闭连接
      */
     public function __destruct()

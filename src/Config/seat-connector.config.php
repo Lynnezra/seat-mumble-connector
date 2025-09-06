@@ -49,12 +49,14 @@ return [
         [
             'name' => 'mumble_admin_username',
             'label' => 'seat-mumble-connector::seat.admin_username', 
-            'type' => 'text'
+            'type' => 'text',
+            'required' => false
         ],
         [
             'name' => 'mumble_admin_password',
             'label' => 'seat-mumble-connector::seat.admin_password',
-            'type' => 'password'
+            'type' => 'password',
+            'required' => false
         ],
         [
             'name' => 'auto_create_channels',

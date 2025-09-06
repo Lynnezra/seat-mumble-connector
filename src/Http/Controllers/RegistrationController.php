@@ -98,9 +98,42 @@ class RegistrationController extends Controller
             $driver_user->user_id = $seat_user->id;
             $driver_user->connector_id = $mumble_user->getClientId();
             $driver_user->unique_id = md5($seat_user->id . $mumble_username . time());
+            // 设置 connector_name 为原始 Mumble 用户名（用于登录）
             $driver_user->connector_name = $mumble_username;
+            // 设置自定义昵称
             $driver_user->nickname = $nickname;
             $driver_user->save();
+            
+            // 保存后重新读取，以便 buildConnectorNickname() 可以访问关联的 user 数据
+            $driver_user = $driver_user->fresh(['user', 'user.characters', 'user.characters.affiliation']);
+            
+            // 现在更新 connector_name 为格式化的显示名称（包含军团标识）
+            try {
+                // 如果有自定义昵称，使用昵称生成格式化名称
+                if (!empty($nickname)) {
+                    $mumbleUser = new \Lynnezra\Seat\Connector\Drivers\Mumble\Driver\MumbleUser($driver_user);
+                    $formatted_name = $mumbleUser->buildFormattedNameWithNickname($nickname);
+                } else {
+                    // 否则使用标准格式
+                    $formatted_name = $driver_user->buildConnectorNickname();
+                }
+                
+                $driver_user->connector_name = $formatted_name;
+                $driver_user->save();
+                
+                logger()->info('Updated connector_name with formatted display name', [
+                    'user_id' => $seat_user->id,
+                    'mumble_username' => $mumble_username,
+                    'nickname' => $nickname,
+                    'formatted_name' => $formatted_name
+                ]);
+            } catch (\Exception $e) {
+                logger()->warning('Failed to update formatted display name, using original username', [
+                    'user_id' => $seat_user->id,
+                    'mumble_username' => $mumble_username,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             return redirect()->route('seat-connector.identities')
                 ->with('success', trans('seat-mumble-connector::seat.registration_success'));
@@ -124,6 +157,35 @@ class RegistrationController extends Controller
         try {
             $driver_user->nickname = $nickname;
             $driver_user->save();
+            
+            // 重新读取以获取最新的关联数据
+            $driver_user = $driver_user->fresh(['user', 'user.characters', 'user.characters.affiliation']);
+            
+            // 更新 connector_name 为格式化的显示名称（包含军团标识）
+            try {
+                // 如果有自定义昵称，使用昵称生成格式化名称
+                if (!empty($nickname)) {
+                    $mumbleUser = new \Lynnezra\Seat\Connector\Drivers\Mumble\Driver\MumbleUser($driver_user);
+                    $formatted_name = $mumbleUser->buildFormattedNameWithNickname($nickname);
+                } else {
+                    // 如果没有昵称，使用标准格式
+                    $formatted_name = $driver_user->buildConnectorNickname();
+                }
+                
+                $driver_user->connector_name = $formatted_name;
+                $driver_user->save();
+                
+                logger()->info('Updated connector_name with formatted display name during update', [
+                    'user_id' => $driver_user->user_id,
+                    'nickname' => $nickname,
+                    'formatted_name' => $formatted_name
+                ]);
+            } catch (\Exception $e) {
+                logger()->warning('Failed to update formatted display name during update', [
+                    'user_id' => $driver_user->user_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             return redirect()->route('seat-connector.identities')
                 ->with('success', trans('seat-mumble-connector::seat.update_success'));

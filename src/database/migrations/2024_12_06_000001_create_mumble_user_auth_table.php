@@ -20,7 +20,7 @@ class CreateMumbleUserAuthTable extends Migration
             $table->id();
             
             // 关联字段
-            $table->unsignedBigInteger('seat_user_id')->comment('SeAT 用户ID');
+            $table->unsignedInteger('seat_user_id')->comment('SeAT 用户ID');
             $table->string('mumble_username', 64)->comment('Mumble 用户名');
             
             // 认证字段

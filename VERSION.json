@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "name": "SeAT Mumble Connector",
     "description": "Mumble语音通信集成插件",
     "stability": "stable",

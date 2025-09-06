@@ -122,11 +122,5 @@ class MumbleConnectorServiceProvider extends AbstractSeatPlugin
         return 'lynnezra';
     }
 
-    /**
-     * 返回插件版本
-     */
-    public function getVersion(): string
-    {
-        return config('mumble-connector.config.version', '1.0.0');
-    }
+
 }

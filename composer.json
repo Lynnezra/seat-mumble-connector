@@ -2,7 +2,7 @@
     "name": "lynnezra/seat-mumble-connector",
     "description": "A SeAT plugin which provides Mumble integration for voice communication management",
     "type": "seat-plugin",
-    "license": "GPL-3.0",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Lynnezra\\Seat\\Connector\\Drivers\\Mumble\\": "src/"

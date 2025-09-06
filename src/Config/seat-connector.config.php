@@ -63,10 +63,20 @@ return [
             'label' => 'seat-mumble-connector::seat.auto_create_channels',
             'type' => 'checkbox'
         ],
-        [
-            'name' => 'allow_user_registration',
+        [    'name' => 'allow_user_registration',
             'label' => 'seat-mumble-connector::seat.allow_user_registration',
             'type' => 'checkbox'
+        ],
+        [
+            'name' => 'enable_custom_auth',
+            'label' => 'seat-mumble-connector::seat.enable_custom_auth',
+            'type' => 'checkbox'
+        ],
+        [
+            'name' => 'server_password',
+            'label' => 'seat-mumble-connector::seat.server_password',
+            'type' => 'password',
+            'required' => false
         ]
     ]
 ];

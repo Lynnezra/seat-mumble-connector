@@ -40,6 +40,8 @@ return [
     'admin_password' => 'Admin Password (Optional)',
     'auto_create_channels' => 'Auto-create channels for corporations/alliances',
     'allow_user_registration' => 'Allow user registration',
+    'enable_custom_auth' => 'Enable personal password authentication',
+    'server_password' => 'Server Password (Optional)',
     'settings_updated' => 'Mumble settings have been updated successfully.',
     
     // 连接测试

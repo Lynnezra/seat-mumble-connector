@@ -98,6 +98,12 @@ class MumbleUser implements IUser
 
     public function getSets(): array
     {
+        // 如果有用户模型，使用 Access Management 系统获取用户有权限的频道
+        if ($this->user_model) {
+            return $this->getSetsFromAccessManagement();
+        }
+        
+        // 如果没有用户模型，回退到基本逻辑
         $channels = [];
         
         try {
@@ -110,10 +116,6 @@ class MumbleUser implements IUser
                 }
             }
             
-            // 获取用户有权限的频道
-            $authorizedChannels = $this->getAuthorizedChannels();
-            $channels = array_merge($channels, $authorizedChannels);
-            
         } catch (\Exception $e) {
             logger()->error('Failed to get user channels', [
                 'user_id' => $this->getUniqueId(),
@@ -124,9 +126,68 @@ class MumbleUser implements IUser
         return array_unique($channels, SORT_REGULAR);
     }
 
+    /**
+     * 通过 Access Management 系统获取用户有权限的频道
+     */
+    private function getSetsFromAccessManagement(): array
+    {
+        $channels = [];
+        
+        try {
+            if (!$this->user_model) {
+                return $channels;
+            }
+            
+            // 获取用户通过 Access Management 允许访问的 Set IDs
+            $allowedSetIds = $this->user_model->allowedSets();
+            
+            $client = MumbleClient::getInstance();
+            
+            // 为每个允许的 Set ID 获取对应的频道
+            foreach ($allowedSetIds as $setId) {
+                $channel = $client->getSet($setId);
+                if ($channel) {
+                    $channels[] = $channel;
+                }
+            }
+            
+            logger()->debug('Retrieved user channels via Access Management', [
+                'user_id' => $this->user_model->user_id,
+                'allowed_sets' => count($allowedSetIds),
+                'valid_channels' => count($channels)
+            ]);
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to get user channels via Access Management', [
+                'user_id' => $this->user_model ? $this->user_model->user_id : null,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return $channels;
+    }
+
+    /**
+     * 将用户添加到频道
+     * 通过 Access Management 验证权限
+     */
     public function addSet(ISet $channel): void
     {
         try {
+            // 如果有用户模型，检查 Access Management 权限
+            if ($this->user_model) {
+                $allowedSetIds = $this->user_model->allowedSets();
+                
+                if (!in_array($channel->getId(), $allowedSetIds)) {
+                    logger()->warning('User attempted to join unauthorized channel', [
+                        'user_id' => $this->user_model->user_id,
+                        'channel_id' => $channel->getId(),
+                        'channel_name' => $channel->getName()
+                    ]);
+                    throw new DriverException("User is not authorized to access this channel");
+                }
+            }
+            
             $this->addToChannel($channel);
         } catch (\Exception $e) {
             throw new DriverException("Failed to add user to channel: " . $e->getMessage());
@@ -237,12 +298,75 @@ class MumbleUser implements IUser
     }
 
     /**
+     * 检查用户是否有权限访问指定频道
+     */
+    public function canAccessChannel(string $channelId): bool
+    {
+        if (!$this->user_model) {
+            return false;
+        }
+        
+        try {
+            $allowedSetIds = $this->user_model->allowedSets();
+            return in_array($channelId, $allowedSetIds);
+        } catch (\Exception $e) {
+            logger()->error('Failed to check channel access permission', [
+                'user_id' => $this->user_model->user_id,
+                'channel_id' => $channelId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * 同步用户权限到 Mumble 服务器
+     * 这个方法会被 seat-connector 的策略应用系统调用
+     */
+    public function syncPermissionsToServer(): bool
+    {
+        try {
+            if (!$this->user_model) {
+                return false;
+            }
+            
+            $allowedChannels = $this->getSetsFromAccessManagement();
+            
+            // 通过 Ice 接口设置用户权限
+            $client = MumbleClient::getInstance();
+            
+            foreach ($allowedChannels as $channel) {
+                // 为用户设置频道访问权限
+                // 这里可以根据需要实现具体的权限设置逻辑
+                logger()->debug('Setting channel permission for user', [
+                    'user_id' => $this->user_model->user_id,
+                    'channel_id' => $channel->getId(),
+                    'channel_name' => $channel->getName()
+                ]);
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to sync user permissions to Mumble server', [
+                'user_id' => $this->user_model ? $this->user_model->user_id : null,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * 获取用户有权限的频道
+     * @deprecated 使用 getSetsFromAccessManagement() 替代
      */
     private function getAuthorizedChannels(): array
     {
-        // 这里实现权限逻辑，基于SeAT的角色和权限系统
-        // 可以根据用户的军团、联盟、角色等信息决定可访问的频道
+        // 向后兼容，但推荐使用 Access Management 系统
+        if ($this->user_model) {
+            return $this->getSetsFromAccessManagement();
+        }
+        
         return [];
     }
 

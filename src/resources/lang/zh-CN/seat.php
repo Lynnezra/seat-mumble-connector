@@ -40,6 +40,8 @@ return [
     'admin_password' => '管理员密码（可选）',
     'auto_create_channels' => '为军团/联盟自动创建频道',
     'allow_user_registration' => '允许用户注册',
+    'enable_custom_auth' => '启用个人密码认证',
+    'server_password' => '服务器密码（可选）',
     'settings_updated' => 'Mumble 设置已成功更新。',
     
     // 连接测试

@@ -84,7 +84,11 @@ class MumbleConnectorServiceProvider extends AbstractSeatPlugin
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManageIceInterface::class,
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\InstallIceExtension::class,
                 \Lynnezra\Seat\Connector\Drivers\Mumble\Console\SyncDisplayNames::class,
-                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManagePermissions::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\SyncChannelsToSets::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\TestAccessManagement::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManageUserPasswords::class,
+                // 移除了独立的权限管理命令，现在使用 seat-connector 的 Access Management
+                // \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManagePermissions::class,
             ]);
         }
     }

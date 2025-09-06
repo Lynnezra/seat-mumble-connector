@@ -13,6 +13,7 @@ use Warlof\Seat\Connector\Drivers\IUser;
 use Warlof\Seat\Connector\Exceptions\DriverException;
 use Warlof\Seat\Connector\Exceptions\DriverSettingsException;
 use Warlof\Seat\Connector\Models\User;
+use Warlof\Seat\Connector\Models\Set;
 use Lynnezra\Seat\Connector\Drivers\Mumble\Ice\MumbleIceService;
 
 /**
@@ -76,6 +77,7 @@ class MumbleClient implements IClient
 
     /**
      * 获取所有频道/组
+     * 同时同步频道信息到 seat-connector Sets 表
      */
     public function getSets(): array
     {
@@ -90,6 +92,9 @@ class MumbleClient implements IClient
             foreach ($channels as $channelData) {
                 $channel = new MumbleChannel($channelData);
                 $this->channels->put($channel->getId(), $channel);
+                
+                // 同步频道到 seat-connector Sets 表
+                $this->syncChannelToSets($channel);
             }
 
         } catch (\Exception $e) {
@@ -450,6 +455,115 @@ class MumbleClient implements IClient
         ]);
         
         return new MumbleUser($userData);
+    }
+
+    /**
+     * 同步频道信息到 seat-connector Sets 表
+     */
+    private function syncChannelToSets(MumbleChannel $channel): void
+    {
+        try {
+            Set::updateOrCreate(
+                [
+                    'connector_type' => 'mumble',
+                    'connector_id' => $channel->getId(),
+                ],
+                [
+                    'name' => $channel->getName(),
+                    'is_public' => false, // 默认为非公开，可通过 Access Management 配置
+                ]
+            );
+            
+            logger()->debug('Synced Mumble channel to Sets table', [
+                'channel_id' => $channel->getId(),
+                'channel_name' => $channel->getName()
+            ]);
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to sync channel to Sets table', [
+                'channel_id' => $channel->getId(),
+                'channel_name' => $channel->getName(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * 批量同步所有频道到 seat-connector Sets 表
+     */
+    public function syncAllChannelsToSets(): int
+    {
+        $syncedCount = 0;
+        
+        try {
+            $channels = $this->fetchChannelsFromServer();
+            
+            foreach ($channels as $channelData) {
+                $channel = new MumbleChannel($channelData);
+                $this->syncChannelToSets($channel);
+                $syncedCount++;
+            }
+            
+            logger()->info('Successfully synced all Mumble channels to Sets table', [
+                'synced_count' => $syncedCount
+            ]);
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to sync channels to Sets table', [
+                'error' => $e->getMessage(),
+                'synced_count' => $syncedCount
+            ]);
+        }
+        
+        return $syncedCount;
+    }
+
+    /**
+     * 清理不存在的频道记录
+     */
+    public function cleanupOrphanedSets(): int
+    {
+        try {
+            $channels = $this->fetchChannelsFromServer();
+            $serverChannelIds = collect($channels)->pluck('id')->map('strval');
+            
+            // 查找在数据库中但不在服务器上的频道
+            $orphanedSets = Set::where('connector_type', 'mumble')
+                ->whereNotIn('connector_id', $serverChannelIds)
+                ->get();
+            
+            $deletedCount = $orphanedSets->count();
+            
+            foreach ($orphanedSets as $set) {
+                logger()->info('Deleting orphaned Mumble channel from Sets table', [
+                    'set_id' => $set->id,
+                    'channel_id' => $set->connector_id,
+                    'channel_name' => $set->name
+                ]);
+                
+                $set->delete();
+            }
+            
+            logger()->info('Cleaned up orphaned Mumble channel sets', [
+                'deleted_count' => $deletedCount
+            ]);
+            
+            return $deletedCount;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to cleanup orphaned channel sets', [
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * 获取 Ice 服务实例
+     */
+    public function getIceService(): ?\Lynnezra\Seat\Connector\Drivers\Mumble\Ice\MumbleIceService
+    {
+        return $this->iceService;
     }
 
     /**

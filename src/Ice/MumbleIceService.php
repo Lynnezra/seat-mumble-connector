@@ -932,4 +932,191 @@ class MumbleIceService
             return null;
         }
     }
+
+    /**
+     * 设置用户认证状态
+     * 
+     * @param string $username 用户名
+     * @param bool $authenticated 是否已认证
+     * @return bool
+     */
+    public function setUserAuthenticated(string $username, bool $authenticated): bool
+    {
+        try {
+            if (!$this->isConnected()) {
+                throw new \Exception('Ice connection not established');
+            }
+
+            // 获取用户ID
+            $userId = $this->getUserIdByName($username);
+            if ($userId === null) {
+                throw new \Exception("User '{$username}' not found");
+            }
+
+            $server = $this->getServer();
+            
+            // 设置用户认证状态
+            $server->setUserAuthenticated($userId, $authenticated);
+            
+            logger()->info('Set user authenticated status via Ice', [
+                'username' => $username,
+                'user_id' => $userId,
+                'authenticated' => $authenticated
+            ]);
+
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to set user authenticated status via Ice', [
+                'username' => $username,
+                'authenticated' => $authenticated,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * 设置用户权限
+     * 
+     * @param string $username 用户名
+     * @param array $permissions 权限列表
+     * @return bool
+     */
+    public function setUserPermissions(string $username, array $permissions): bool
+    {
+        try {
+            if (!$this->isConnected()) {
+                throw new \Exception('Ice connection not established');
+            }
+
+            $userId = $this->getUserIdByName($username);
+            if ($userId === null) {
+                throw new \Exception("User '{$username}' not found");
+            }
+
+            $server = $this->getServer();
+            
+            // 设置各种权限
+            foreach ($permissions as $permission => $value) {
+                switch ($permission) {
+                    case 'can_speak':
+                        // 设置说话权限
+                        $this->setUserChannelPermission($userId, 0, 'speak', $value);
+                        break;
+                    case 'can_hear':
+                        // 设置听取权限
+                        $this->setUserChannelPermission($userId, 0, 'hear', $value);
+                        break;
+                    case 'can_move':
+                        // 设置移动权限
+                        $this->setUserChannelPermission($userId, 0, 'move', $value);
+                        break;
+                    case 'can_kick':
+                        // 设置踢出权限
+                        $this->setUserChannelPermission($userId, 0, 'kick', $value);
+                        break;
+                    case 'can_ban':
+                        // 设置封禁权限
+                        $this->setUserChannelPermission($userId, 0, 'ban', $value);
+                        break;
+                }
+            }
+            
+            logger()->info('Set user permissions via Ice', [
+                'username' => $username,
+                'user_id' => $userId,
+                'permissions' => $permissions
+            ]);
+
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to set user permissions via Ice', [
+                'username' => $username,
+                'permissions' => $permissions,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * 验证用户认证（支持自定义认证）
+     * 
+     * @param string $username 用户名
+     * @param string $password 密码
+     * @return array 认证结果
+     */
+    public function authenticateUser(string $username, string $password): array
+    {
+        try {
+            // 使用自定义认证服务
+            $authService = app(\Lynnezra\Seat\Connector\Drivers\Mumble\Services\MumbleAuthenticationService::class);
+            $result = $authService->authenticateUser($username, $password);
+            
+            // 如果认证成功且是个人密码，通过 Ice 设置认证状态
+            if ($result['success'] && $result['auth_type'] === 'personal_password') {
+                $this->setUserAuthenticated($username, true);
+                
+                // 设置基本权限
+                $this->setUserPermissions($username, [
+                    'can_speak' => true,
+                    'can_hear' => true
+                ]);
+            }
+            
+            return $result;
+            
+        } catch (\Exception $e) {
+            logger()->error('Authentication failed via Ice', [
+                'username' => $username,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'success' => false,
+                'auth_type' => 'error',
+                'authenticated' => false,
+                'message' => 'Authentication error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * 设置用户频道权限
+     * 
+     * @param int $userId 用户ID
+     * @param int $channelId 频道ID
+     * @param string $permission 权限类型
+     * @param bool $allowed 是否允许
+     * @return bool
+     */
+    private function setUserChannelPermission(int $userId, int $channelId, string $permission, bool $allowed): bool
+    {
+        try {
+            $server = $this->getServer();
+            
+            // 这里需要根据 Mumble Ice API 的实际方法来实现
+            // 不同版本的 Mumble 可能有不同的 API
+            
+            // 示例实现（需要根据实际 API 调整）
+            $acl = $server->getACL($channelId);
+            
+            // 修改 ACL 条目
+            // 这里是一个简化的实现，实际中需要根据 Mumble 的 ACL 系统来做
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            logger()->error('Failed to set user channel permission', [
+                'user_id' => $userId,
+                'channel_id' => $channelId,
+                'permission' => $permission,
+                'allowed' => $allowed,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 }

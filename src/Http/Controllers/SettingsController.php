@@ -12,6 +12,9 @@ class SettingsController extends Controller
         $validatedData = $request->validate([
             'mumble_server_host' => 'required|string|max:255',
             'mumble_server_port' => 'required|integer|between:1,65535',
+            'mumble_ice_host' => 'nullable|string|max:255',
+            'mumble_ice_port' => 'nullable|integer|between:1,65535',
+            'mumble_ice_secret' => 'nullable|string|max:255',
             'mumble_admin_username' => 'nullable|string|max:255',
             'mumble_admin_password' => 'nullable|string|max:255',
             'auto_create_channels' => 'boolean',
@@ -25,6 +28,9 @@ class SettingsController extends Controller
         $settings = (object) [
             'mumble_server_host' => $request->input('mumble_server_host'),
             'mumble_server_port' => $request->input('mumble_server_port'),
+            'mumble_ice_host' => $request->input('mumble_ice_host'),
+            'mumble_ice_port' => $request->input('mumble_ice_port'),
+            'mumble_ice_secret' => $request->input('mumble_ice_secret'),
             'mumble_admin_username' => $request->input('mumble_admin_username'),
             'mumble_admin_password' => $request->input('mumble_admin_password'),
             'auto_create_channels' => $request->input('auto_create_channels', false),

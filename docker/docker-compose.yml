@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  seat-mumble-ice:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ice
+    container_name: seat-mumble-ice
+    volumes:
+      - ../:/var/www/html
+    environment:
+      - PHP_EXTENSION_ICE=1
+    networks:
+      - seat-network
+    depends_on:
+      - mumble-server
+
+  mumble-server:
+    image: mumblevoip/mumble-server:latest
+    container_name: mumble-server
+    ports:
+      - "64738:64738/tcp"
+      - "64738:64738/udp"
+      - "6502:6502/tcp"  # Ice 接口端口
+    volumes:
+      - ./murmur.ini:/etc/murmur/murmur.ini:ro
+      - mumble-data:/var/lib/mumble-server
+    environment:
+      - MUMBLE_CONFIG_FILE=/etc/murmur/murmur.ini
+    networks:
+      - seat-network
+
+  # 可选：用于测试的 SeAT 服务
+  seat-test:
+    image: eveseat/seat:latest
+    container_name: seat-test
+    ports:
+      - "8080:80"
+    volumes:
+      - ../:/var/www/seat/seat-mumble-connector
+    environment:
+      - DB_HOST=mariadb
+      - DB_DATABASE=seat
+      - DB_USERNAME=seat
+      - DB_PASSWORD=seat_password
+      - REDIS_HOST=redis
+    networks:
+      - seat-network
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:10.5
+    container_name: seat-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=seat
+      - MYSQL_USER=seat
+      - MYSQL_PASSWORD=seat_password
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - seat-network
+
+  redis:
+    image: redis:6-alpine
+    container_name: seat-redis
+    networks:
+      - seat-network
+
+networks:
+  seat-network:
+    driver: bridge
+
+volumes:
+  mumble-data:
+  mariadb-data:

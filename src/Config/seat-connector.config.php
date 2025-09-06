@@ -32,6 +32,21 @@ return [
             'type' => 'number'
         ],
         [
+            'name' => 'mumble_ice_host',
+            'label' => 'seat-mumble-connector::seat.ice_host',
+            'type' => 'text'
+        ],
+        [
+            'name' => 'mumble_ice_port',
+            'label' => 'seat-mumble-connector::seat.ice_port',
+            'type' => 'number'
+        ],
+        [
+            'name' => 'mumble_ice_secret',
+            'label' => 'seat-mumble-connector::seat.ice_secret',
+            'type' => 'password'
+        ],
+        [
             'name' => 'mumble_admin_username',
             'label' => 'seat-mumble-connector::seat.admin_username', 
             'type' => 'text'

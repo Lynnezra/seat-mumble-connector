@@ -22,15 +22,16 @@ class RegistrationController extends Controller
             $driver_user = new User();
         }
 
-        $settings = setting('seat-connector.drivers.mumble', true);
-        
-        if (is_null($settings) || !is_object($settings)) {
-            throw new DriverSettingsException('The Mumble driver has not been configured yet.');
+        // 获取设置，如果没有则使用默认值
+        try {
+            $settings = setting('seat-connector.drivers.mumble', true);
+            $allow_registration = is_object($settings) && property_exists($settings, 'allow_user_registration') 
+                ? $settings->allow_user_registration 
+                : true; // 默认允许注册
+        } catch (\Exception $e) {
+            logger()->warning('Failed to load Mumble settings, using defaults', ['error' => $e->getMessage()]);
+            $allow_registration = true;
         }
-
-        $allow_registration = property_exists($settings, 'allow_user_registration') 
-            ? $settings->allow_user_registration 
-            : true;
 
         return view('seat-mumble-connector::registration.mumble', [
             'driver_user' => $driver_user,

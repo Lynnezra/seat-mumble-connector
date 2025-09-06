@@ -33,6 +33,9 @@ return [
     // 设置
     'server_host' => 'Mumble Server Host',
     'server_port' => 'Mumble Server Port',
+    'ice_host' => 'Ice Interface Host',
+    'ice_port' => 'Ice Interface Port',
+    'ice_secret' => 'Ice Secret Key',
     'admin_username' => 'Admin Username',
     'admin_password' => 'Admin Password',
     'auto_create_channels' => 'Auto-create channels for corporations/alliances',

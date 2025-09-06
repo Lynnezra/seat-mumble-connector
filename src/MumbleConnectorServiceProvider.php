@@ -19,6 +19,7 @@ class MumbleConnectorServiceProvider extends AbstractSeatPlugin
         $this->addViews();
         $this->addTranslations();
         $this->addMigrations();
+        $this->addCommands();
         
         // 注册事件监听器
         $this->registerEventListeners();
@@ -70,6 +71,20 @@ class MumbleConnectorServiceProvider extends AbstractSeatPlugin
     private function addMigrations(): void
     {
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+    }
+
+    /**
+     * 注册命令
+     */
+    private function addCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\TestIceConnection::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\ManageIceInterface::class,
+                \Lynnezra\Seat\Connector\Drivers\Mumble\Console\InstallIceExtension::class,
+            ]);
+        }
     }
 
     /**

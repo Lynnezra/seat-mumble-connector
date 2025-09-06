@@ -33,6 +33,9 @@ return [
     // 设置
     'server_host' => 'Mumble 服务器主机',
     'server_port' => 'Mumble 服务器端口',
+    'ice_host' => 'Ice 接口主机',
+    'ice_port' => 'Ice 接口端口',
+    'ice_secret' => 'Ice 密钥',
     'admin_username' => '管理员用户名',
     'admin_password' => '管理员密码',
     'auto_create_channels' => '为军团/联盟自动创建频道',

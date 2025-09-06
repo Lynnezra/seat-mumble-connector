@@ -7,8 +7,8 @@ return [
     
     // 默认配置
     'defaults' => [
-        'server_host' => 'localhost',
-        'server_port' => 64738,
+        'server_host' => env('MUMBLE_SERVER_HOST', 'location'), // 使用实际服务器 IP
+        'server_port' => env('MUMBLE_SERVER_PORT', 64738),
         'auto_create_channels' => true,
         'allow_user_registration' => true,
     ],

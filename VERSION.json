@@ -1,5 +1,5 @@
 {
-    "version": "1.0.2",
+    "version": "1.1.0",
     "name": "SeAT Mumble Connector",
     "description": "Mumble语音通信集成插件",
     "stability": "stable",
@@ -10,7 +10,10 @@
         "基于SeAT角色的权限控制",
         "实时用户状态同步",
         "多语言界面支持",
-        "完整的管理员配置选项"
+        "完整的管理员配置选项",
+        "Docker容器化部署支持",
+        "Ice扩展集成与自动安装",
+        "配置文件模板和安装脚本"
     ],
     "compatibility": {
         "minimum-stability": ["dev", "stable"],

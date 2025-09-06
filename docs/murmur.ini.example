@@ -1,0 +1,202 @@
+# Mumble Ice 接口配置示例
+# 这是一个用于 seat-mumble-connector 的完整 Mumble 服务器配置示例
+
+# ===== 基本服务器配置 =====
+
+# Mumble 服务器端口（用于客户端连接）
+port=64738
+
+# 最大用户数
+users=100
+
+# 服务器名称
+registername=SeAT Mumble Server
+
+# 服务器密码（可选，留空表示无密码）
+serverpassword=
+
+# 欢迎消息
+welcometext=欢迎来到 SeAT Mumble 服务器！<br/>请遵守服务器规则。
+
+# ===== Ice 接口配置 =====
+
+# Ice 接口监听地址和端口
+# 安全配置：仅本地访问（推荐）
+# ice=tcp -h 127.0.0.1 -p 6502
+
+# 特定 IP 访问（推荐用于远程管理）
+# ice=tcp -h 192.168.1.33 -p 6502
+
+# 所有接口访问（高风险，需要强安全措施）
+# 仅在以下情况使用：
+# 1. 有强密钥保护
+# 2. 防火墙严格限制
+# 3. 使用 VPN 或内网环境
+# ice=tcp -h 0.0.0.0 -p 6502
+
+# Ice 认证密钥
+# 使用 0.0.0.0 时必须设置强密钥（至少 32 字符）
+icesecret=your_very_strong_secret_key_change_this_in_production_32chars_min
+
+# 分别设置读写密钥（更高安全性，推荐）
+# icesecretread=readonly_secret_key_for_monitoring_access_only
+# icesecretwrite=writeaccess_secret_key_for_full_management_access
+
+# SSL/TLS 配置（强烈推荐用于远程访问）
+# 当使用 0.0.0.0 时应启用 SSL
+# icessl=1
+# icesslcert=/path/to/ssl/certificate.pem
+# icesslkey=/path/to/ssl/private.key
+
+# ===== 数据库配置 =====
+
+# SQLite 数据库路径（默认）
+database=/var/lib/mumble-server/mumble-server.sqlite
+
+# 使用 MySQL/MariaDB（可选）
+# database_host=localhost
+# database_port=3306
+# database_username=mumble
+# database_password=secure_password
+# database_name=mumble
+
+# 使用 PostgreSQL（可选）
+# database=postgresql://mumble:password@localhost/mumble
+
+# ===== 日志配置 =====
+
+# 日志文件路径
+logfile=/var/log/mumble-server/mumble-server.log
+
+# 日志目标 (1=文件, 2=syslog, 4=控制台)
+logtargets=1
+
+# 日志天数（0 表示不限制）
+logdays=31
+
+# ===== SSL/TLS 配置 =====
+
+# SSL 证书文件（推荐在生产环境中使用）
+# sslCert=/etc/ssl/certs/mumble.crt
+# sslKey=/etc/ssl/private/mumble.key
+
+# 要求客户端证书
+certrequired=false
+
+# ===== 频道和权限配置 =====
+
+# 记住频道持续时间（天）
+rememberchannel=31
+
+# 默认频道权限
+defaultchannel=1
+
+# 允许 HTML 消息
+allowhtml=false
+
+# 消息长度限制
+messagelength=5000
+
+# 图片消息限制（字节）
+imagemessagelength=131072
+
+# ===== 用户注册配置 =====
+
+# 允许用户注册
+# 通过 Ice 接口管理用户时建议设为 true
+# registerurl=
+
+# 最大注册用户数（0 表示无限制）
+# users=0
+
+# ===== 带宽和性能配置 =====
+
+# 每用户带宽限制（bps）
+bandwidth=72000
+
+# 超时设置（秒）
+timeout=30
+
+# ===== 其他配置 =====
+
+# 服务器密码哈希算法
+# kdfiterations=64000
+
+# OPUS 编解码器
+opusthreshold=100
+
+# 频道嵌套限制
+channelnestinglimit=10
+
+# 临时频道删除延迟（秒）
+temporarychanneldelete=0
+
+# ===== 文本到语音配置 =====
+
+# 禁用文本到语音
+textmessagelength=5000
+
+# ===== 地理位置配置（可选） =====
+
+# 服务器地理位置信息
+# location=Asia/Shanghai
+
+# ===== 高级配置 =====
+
+# 启用详细日志（调试用，生产环境建议关闭）
+# verbose=true
+
+# ICE 调试（仅在排查 Ice 问题时使用）
+# icewarn=true
+
+# 绑定到所有地址（不推荐，安全风险）
+# host=0.0.0.0
+
+# ===== 配置说明 =====
+
+# 1. 安全建议：
+#    - 将 Ice 接口仅绑定到 127.0.0.1
+#    - 设置强 Ice 密钥（至少 32 字符）
+#    - 定期更换 Ice 密钥
+#    - 使用 SSL 证书（生产环境）
+
+# 2. 性能调优：
+#    - 根据实际用户数调整 users 参数
+#    - 监控带宽使用情况
+#    - 定期清理日志文件
+
+# 3. 与 SeAT Connector 集成：
+#    - 确保 Ice 端口可访问
+#    - 在 SeAT 中配置相同的 Ice 密钥
+#    - 测试连接：php artisan mumble:test-ice
+
+# 4. 故障排除：
+#    - 检查防火墙设置
+#    - 验证 Ice 扩展已加载
+#    - 查看服务器日志：tail -f /var/log/mumble-server/mumble-server.log
+#    - 检查端口监听：netstat -tulpn | grep 6502
+
+# ===== 示例 systemd 服务配置 =====
+
+# 文件路径：/etc/systemd/system/mumble-server.service
+#
+# [Unit]
+# Description=Mumble Server (Murmur)
+# After=network.target mysql.service
+# Wants=mysql.service
+#
+# [Service]
+# Type=forking
+# PIDFile=/var/run/mumble-server/mumble-server.pid
+# ExecStart=/usr/bin/murmurd -ini /etc/murmur/murmur.ini
+# ExecReload=/bin/kill -s HUP $MAINPID
+# User=mumble-server
+# Group=mumble-server
+# Restart=always
+#
+# [Install]
+# WantedBy=multi-user.target
+
+# 启用和启动服务：
+# sudo systemctl enable mumble-server
+# sudo systemctl start mumble-server

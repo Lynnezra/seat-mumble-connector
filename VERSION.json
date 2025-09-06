@@ -1,0 +1,19 @@
+{
+    "version": "1.0.0",
+    "name": "SeAT Mumble Connector",
+    "description": "Mumble语音通信集成插件",
+    "stability": "stable",
+    "minimum_seat_version": "5.0",
+    "features": [
+        "Mumble服务器集成与用户管理",
+        "自动频道创建和权限分配", 
+        "基于SeAT角色的权限控制",
+        "实时用户状态同步",
+        "多语言界面支持",
+        "完整的管理员配置选项"
+    ],
+    "compatibility": {
+        "minimum-stability": ["dev", "stable"],
+        "prefer-stable": true
+    }
+}

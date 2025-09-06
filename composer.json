@@ -1,0 +1,45 @@
+{
+    "name": "lynnezra/seat-mumble-connector",
+    "description": "A SeAT plugin which provides Mumble integration for voice communication management",
+    "type": "seat-plugin",
+    "license": "GPL-3.0",
+    "autoload": {
+        "psr-4": {
+            "Lynnezra\\Seat\\Connector\\Drivers\\Mumble\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lynnezra\\Seat\\Connector\\Drivers\\Mumble\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Lynnezra",
+            "email": "lynnezra@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Lynnezra\\Seat\\Connector\\Drivers\\Mumble\\MumbleConnectorServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "ext-json": "*",
+        "warlof/seat-connector": "^3.0",
+        "eveseat/services": "^5.0",
+        "eveseat/eveapi": "^5.0",
+        "eveseat/web": "^5.0",
+        "eveseat/api": "^5.0",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0",
+        "rector/rector": "^0.18.2",
+        "driftingly/rector-laravel": "^0.24.1"
+    }
+}
